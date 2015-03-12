@@ -1,5 +1,5 @@
 src/main.o: ../src/main.c ../system/include/diag/Trace.h \
- ../src/my_flash.h ../system/include/stm32f4-hal/stm32f4xx_hal.h \
+ ../system/include/stm32f4-hal/stm32f4xx_hal.h \
  ../include/stm32f4xx_hal_conf.h \
  ../system/include/stm32f4-hal/stm32f4xx_hal_rcc.h \
  ../system/include/stm32f4-hal/stm32f4xx_hal_def.h \
@@ -60,12 +60,9 @@ src/main.o: ../src/main.c ../system/include/diag/Trace.h \
  ../system/include/stm32f4-hal/stm32f4xx_hal_pcd.h \
  ../system/include/stm32f4-hal/stm32f4xx_ll_usb.h \
  ../system/include/stm32f4-hal/stm32f4xx_hal_pcd_ex.h \
- ../system/include/stm32f4-hal/stm32f4xx_hal_hcd.h \
- ../system/include/stm32f4-hal/stm32f4xx_ll_fsmc.h
+ ../system/include/stm32f4-hal/stm32f4xx_hal_hcd.h ../src/fsmc_nand_if.h
 
 ../system/include/diag/Trace.h:
-
-../src/my_flash.h:
 
 ../system/include/stm32f4-hal/stm32f4xx_hal.h:
 
@@ -193,4 +190,4 @@ src/main.o: ../src/main.c ../system/include/diag/Trace.h \
 
 ../system/include/stm32f4-hal/stm32f4xx_hal_hcd.h:
 
-../system/include/stm32f4-hal/stm32f4xx_ll_fsmc.h:
+../src/fsmc_nand_if.h:

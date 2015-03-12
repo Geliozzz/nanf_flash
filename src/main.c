@@ -7,7 +7,9 @@
 
 #include <stdio.h>
 #include "diag/Trace.h"
-#include "my_flash.h"
+#include "stm32f4xx_hal.h"
+#include "fsmc_nand_if.h"
+
 
 // ----------------------------------------------------------------------------
 //
@@ -31,13 +33,37 @@
 
 void SystemClock_Config(void);
 
+uint8_t dataToWrite[512];
+uint8_t dataToRead[512];
+
 int
 main(int argc, char* argv[])
 {
   // At this stage the system clock should have already been configured
   // at high speed.
+	uint16_t i;
 	SystemClock_Config();
-	Flash_Test();
+//	Flash_Test();
+	NAND_Init();
+
+	for (i = 0; i < 512; i++)
+	    {
+	        dataToWrite[i] = i + 1;
+	        dataToRead[i] = 0x00;
+	    }
+
+	//    NAND_Write(0, dataToWrite, 512);
+	//    NAND_Read(0, dataToRead, 512);
+	NAND_ADDRESS m_address;
+	m_address.Zone = 0;
+	m_address.Page = 2;
+	m_address.Block = 0;
+	FSMC_NAND_WriteSpareArea_alt(dataToWrite, m_address, 1);
+
+	FSMC_NAND_ReadSpareArea_alt(dataToRead, m_address, 1);
+
+	m_address.Page = 5;
+
   // Infinite loop
   while (1)
     {

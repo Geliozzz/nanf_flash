@@ -90,7 +90,7 @@ typedef struct
   uint8_t Third_Id;
 
   uint8_t Fourth_Id;
-}NAND_IDTypeDef;
+}m_nand_identificator;
 
 /** 
   * @brief  NAND Memory address Structure definition
@@ -213,7 +213,7 @@ void               HAL_NAND_IRQHandler(NAND_HandleTypeDef *hnand);
 void        HAL_NAND_ITCallback(NAND_HandleTypeDef *hnand);
 
 /* IO operation functions  ****************************************************/
-HAL_StatusTypeDef  HAL_NAND_Read_ID(NAND_HandleTypeDef *hnand, NAND_IDTypeDef *pNAND_ID);
+HAL_StatusTypeDef  HAL_NAND_Read_ID(NAND_HandleTypeDef *hnand, m_nand_identificator *pNAND_ID);
 HAL_StatusTypeDef  HAL_NAND_Reset(NAND_HandleTypeDef *hnand);
 HAL_StatusTypeDef  HAL_NAND_Read_Page(NAND_HandleTypeDef *hnand, NAND_AddressTypedef *pAddress, uint8_t *pBuffer, uint32_t NumPageToRead);
 HAL_StatusTypeDef  HAL_NAND_Write_Page(NAND_HandleTypeDef *hnand, NAND_AddressTypedef *pAddress, uint8_t *pBuffer, uint32_t NumPageToWrite);

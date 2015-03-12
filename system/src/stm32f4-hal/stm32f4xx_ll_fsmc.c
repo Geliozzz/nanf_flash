@@ -406,7 +406,7 @@ HAL_StatusTypeDef FSMC_NORSRAM_WriteOperation_Disable(FSMC_NORSRAM_TypeDef *Devi
   * @param  Init: Pointer to NAND Initialization structure
   * @retval HAL status
   */
-HAL_StatusTypeDef FSMC_NAND_Init(FSMC_NAND_TypeDef *Device, FSMC_NAND_InitTypeDef *Init)
+HAL_StatusTypeDef FSMC_Init(FSMC_NAND_TypeDef *Device, FSMC_NAND_InitTypeDef *Init)
 {
   uint32_t tmppcr  = 0; 
     
