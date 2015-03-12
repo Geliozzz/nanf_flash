@@ -654,96 +654,55 @@ uint32_t FSMC_NAND_WriteSpareArea(uint8_t *pBuffer,
                                   NAND_ADDRESS Address,
                                   uint32_t NumSpareAreaTowrite)
 {
-  uint32_t index = 0x00, numSpareAreaWritten = 0x00; 
-  uint32_t addressStatus = NAND_VALID_ADDRESS;
-  uint32_t status = NAND_READY, size = 0x00; 
-  uint32_t translateAddr = LBLK_ROW_ADDRESS(Address);
-  uint32_t rowAddr,colAddr;
-  switch(NAND_TYPE)
-  {
-    case SBLK_NAND:
-    while((NumSpareAreaTowrite != 0x00) && 
-          (addressStatus == NAND_VALID_ADDRESS)&&
-          (status == NAND_READY))
-      {
-        /* Page write Spare area command and address */
-       COMMAND_REGISTER = SBLK_NAND_CMD_AREA_C;
-       COMMAND_REGISTER = SBLK_NAND_CMD_WRITE0;
+	uint32_t index = 0x00, numSpareAreaWritten = 0x00;
+	  uint32_t addressStatus = NAND_VALID_ADDRESS;
+	  uint32_t status = NAND_READY, size = 0x00;
+	  uint32_t translateAddr = LBLK_ROW_ADDRESS(Address);
+	  uint32_t rowAddr,colAddr;
 
-        FSMC_SBLK_NAND_SendAddress(Address);
+	  colAddr  = ActualPageSize + SblkSpareAreaSize*(translateAddr%Multiplier);
+	        rowAddr  =  translateAddr/Multiplier;
 
-        /* Calculate the size */ 
-        size = SBLK_NAND_SPARE_AREA_SIZE*(1 + numSpareAreaWritten);
+	        while((NumSpareAreaTowrite != 0x00) &&
+	              (addressStatus == NAND_VALID_ADDRESS) &&
+	              (status == NAND_READY))
+	        {
+	          /* Page write command and address */
+	        	/* Page write Spare area command and address */
+	        	    *(__IO uint8_t *)(NAND_FLASH_START_ADDR | CMD_AREA) = NAND_CMD_PAGEPROGRAM;
 
-        /* Write the data */ 
-        for(; index < size; index++)
-        {
-          DATA_REGISTER = pBuffer[index];
-        }
-        
-       COMMAND_REGISTER = SBLK_NAND_CMD_WRITE_TRUE1;
+	        	    *(__IO uint8_t *)(NAND_FLASH_START_ADDR | ADDR_AREA) = 0x00;
+	        	    *(__IO uint8_t *)(NAND_FLASH_START_ADDR | ADDR_AREA) = 0x08;
+	        	    *(__IO uint8_t *)(NAND_FLASH_START_ADDR | ADDR_AREA) = ADDR_1st_CYCLE(ROW_ADDRESS);
+	        	    *(__IO uint8_t *)(NAND_FLASH_START_ADDR | ADDR_AREA) = ADDR_2nd_CYCLE(ROW_ADDRESS);
 
-        /* Check status for successful operation */
-        status = FSMC_NAND_GetStatus();
+	          /* Calculate the size */
+	           size = SBLK_NAND_SPARE_AREA_SIZE *(1 + numSpareAreaWritten);
 
-        if(status == NAND_READY)
-        {
-          numSpareAreaWritten++;      
+	          /** Write data **/
+	          for(; index < size; index++)
+	          {
+	        	  *(__IO uint8_t *)(NAND_FLASH_START_ADDR | DATA_AREA) = pBuffer[index];
+	          }
 
-          NumSpareAreaTowrite--;  
-        
-          /* Calculate Next Page Address */
-          addressStatus = FSMC_NAND_AddressIncrement(&Address);
-        }       
-      }
-      
-      return (status | addressStatus);
-          
-  case LBLK_NAND:
-      colAddr  = ActualPageSize + SblkSpareAreaSize*(translateAddr%Multiplier);
-      rowAddr  =  translateAddr/Multiplier;
-      
-      while((NumSpareAreaTowrite != 0x00) && 
-            (addressStatus == NAND_VALID_ADDRESS) && 
-            (status == NAND_READY))
-      {
-        /* Page write command and address */
-       COMMAND_REGISTER = LBLK_NAND_CMD_PAGE_PROGRAM_CYCLE1;
-        
-       FSMC_LBLK_NAND_SendAddress(rowAddr,colAddr);
-        
-        /* Calculate the size */
-         size = SBLK_NAND_SPARE_AREA_SIZE *(1 + numSpareAreaWritten);
-        
-        /** Write data **/
-        for(; index < size; index++)
-        {
-          DATA_REGISTER = pBuffer[index];
-        }
-                 
-       COMMAND_REGISTER = LBLK_NAND_CMD_PAGE_PROGRAM_CYCLE2;
-        
-     /* Check status for successful operation */
-      status = FSMC_NAND_GetStatus();
+	          *(__IO uint8_t *)(NAND_FLASH_START_ADDR | CMD_AREA) = NAND_CMD_PAGEPROGRAM_TRUE;
 
-      if(status == NAND_READY)
-      {
-        numSpareAreaWritten++;      
+	       /* Check status for successful operation */
+	        status = FSMC_NAND_GetStatus();
 
-        NumSpareAreaTowrite--; 
-        
-        colAddr += SblkSpareAreaSize;
-       
-       if(colAddr >=(ActualPageSize + ActualSpareAreaSize - SblkSpareAreaSize))
-          rowAddr += 1;
-      }       
-    }   
-    return (status | addressStatus);
-  default :
-      status =   NAND_ERROR;
-      return(status);      
-  }
+	        if(status == NAND_READY)
+	        {
+	          numSpareAreaWritten++;
 
+	          NumSpareAreaTowrite--;
+
+	          colAddr += SblkSpareAreaSize;
+
+	         if(colAddr >=(ActualPageSize + ActualSpareAreaSize - SblkSpareAreaSize))
+	            rowAddr += 1;
+	        }
+	      }
+	      return (status | addressStatus);
 }
 
 /**
@@ -765,88 +724,61 @@ uint32_t FSMC_NAND_ReadSpareArea(uint8_t *pBuffer,
                                  NAND_ADDRESS Address,
                                  uint32_t NumSpareAreaToRead)
 {
-  uint32_t numSpareAreaRead = 0x00, index = 0x00;
-  uint32_t addressStatus = NAND_VALID_ADDRESS;
-  uint32_t status = NAND_READY, size = 0x00;
-  uint32_t translateAddr = LBLK_ROW_ADDRESS(Address);
-  uint32_t rowAddr,colAddr;
-  
-  switch(NAND_TYPE)
-  {
-  case SBLK_NAND:
-    while((NumSpareAreaToRead != 0x0) && 
-          (addressStatus == NAND_VALID_ADDRESS))
-    {     
-      /* Page Read command and page address */     
-      COMMAND_REGISTER = SBLK_NAND_CMD_AREA_C;
-      
-      FSMC_SBLK_NAND_SendAddress(Address);  
-      
-      COMMAND_REGISTER = SBLK_NAND_CMD_AREA_TRUE1;
-      
-      /* Data Read */
-      size = SBLK_NAND_SPARE_AREA_SIZE*(1 + numSpareAreaRead);
-      
-      /* Get Data into Buffer */
-      for ( ;index < size; index++)
-      {
-        pBuffer[index] = DATA_REGISTER;
-      }
-      
-      numSpareAreaRead++;
-      
-      NumSpareAreaToRead--;
-      
-      /* Calculate page address */           			 
-      addressStatus = FSMC_NAND_AddressIncrement(&Address);
-    }
-    
-    status = FSMC_NAND_GetStatus();
-    
-    return (status | addressStatus);
-  case LBLK_NAND:
-    
-    colAddr  = ActualPageSize + SblkSpareAreaSize*(translateAddr%Multiplier);
-    rowAddr  =  translateAddr/Multiplier;
-    
-    while((NumSpareAreaToRead != 0x0) && 
-          (addressStatus == NAND_VALID_ADDRESS))
-    {  
-      /** Page Read Command **/
-      COMMAND_REGISTER = LBLK_NAND_CMD_READ_CYCLE1; 
-      
-      /**Page Read Address**/
-      FSMC_LBLK_NAND_SendAddress(rowAddr,colAddr);
-      
-      COMMAND_REGISTER = LBLK_NAND_CMD_READ_CYCLE2; 
-      
-      /* Data Read */
-      size = SBLK_NAND_SPARE_AREA_SIZE *(1 + numSpareAreaRead);
-      
-      /* Get Data into Buffer */
-      for ( ;index < size; index++)
-      {
-        pBuffer[index] = DATA_REGISTER;
-      }
-      numSpareAreaRead++;
-      
-      NumSpareAreaToRead--;
-      
-      colAddr += SblkSpareAreaSize;
-      
-      if(colAddr >=(ActualPageSize + ActualSpareAreaSize - SblkSpareAreaSize))
-        rowAddr += 1;
-      
-    }
-    
-    status = FSMC_NAND_GetStatus();
-    
-    return (status | addressStatus);
-  default :
-       status =   NAND_ERROR;
-       return(status);     
-  }
-  
+	uint32_t numSpareAreaRead = 0x00, index = 0x00;
+	  uint32_t addressStatus = NAND_VALID_ADDRESS;
+	  uint32_t status = NAND_READY, size = 0x00;
+	  uint32_t translateAddr = LBLK_ROW_ADDRESS(Address);
+	  uint32_t rowAddr,colAddr;
+
+	 // puts("Read Spare Area");
+
+	    colAddr  = ActualPageSize + SblkSpareAreaSize*(translateAddr%Multiplier);
+	    rowAddr  =  translateAddr/Multiplier;
+
+	    while((NumSpareAreaToRead != 0x0) &&
+	          (addressStatus == NAND_VALID_ADDRESS))
+	    {
+	      /** Page Read Command **/
+	        /* Page Read command and page address */
+	        *(__IO uint8_t *)(NAND_FLASH_START_ADDR | CMD_AREA) = NAND_CMD_READ_1;
+
+	        *(__IO uint8_t *)(NAND_FLASH_START_ADDR | ADDR_AREA) = 0x00;
+	        *(__IO uint8_t *)(NAND_FLASH_START_ADDR | ADDR_AREA) = 0x08;
+	        *(__IO uint8_t *)(NAND_FLASH_START_ADDR | ADDR_AREA) = ADDR_1st_CYCLE(ROW_ADDRESS);
+	        *(__IO uint8_t *)(NAND_FLASH_START_ADDR | ADDR_AREA) = ADDR_2nd_CYCLE(ROW_ADDRESS);
+
+	        *(__IO uint8_t *)(NAND_FLASH_START_ADDR | CMD_AREA) = NAND_CMD_READ_TRUE;
+
+	        /* ¶ÁÃ¦½Å */
+	       // while( GPIO_ReadInputDataBit(GPIOG, GPIO_Pin_6) == 0 );
+	        while(HAL_GPIO_ReadPin(GPIOD, GPIO_PIN_6) == 0) {
+
+	        } ;
+
+	        for(int d = 0; d < 10000; d++)
+	        {
+
+	        }
+
+	      /* Get Data into Buffer */
+	      for ( ;index < size; index++)
+	      {
+	        pBuffer[index] = *(__IO uint8_t *)(NAND_FLASH_START_ADDR | DATA_AREA);
+	      }
+	      numSpareAreaRead++;
+
+	      NumSpareAreaToRead--;
+
+	      colAddr += SblkSpareAreaSize;
+
+	      if(colAddr >=(ActualPageSize + ActualSpareAreaSize - SblkSpareAreaSize))
+	        rowAddr += 1;
+
+	    }
+
+	    status = FSMC_NAND_GetStatus();
+
+	    return (status | addressStatus);
   
 }
 
@@ -1385,6 +1317,8 @@ uint32_t FSMC_NAND_WriteSpareArea_alt(uint8_t *pBuffer, NAND_ADDRESS Address, ui
   uint32_t index = 0x00, numsparesreawritten = 0x00, addressstatus = NAND_VALID_ADDRESS;
   uint32_t status = NAND_READY, size = 0x00;
 
+  puts("Write Spare Area");
+
   while((NumSpareAreaTowrite != 0x00) && (addressstatus == NAND_VALID_ADDRESS) && (status == NAND_READY))
   {
     /* Page write Spare area command and address */
@@ -1448,6 +1382,8 @@ uint32_t FSMC_NAND_ReadSpareArea_alt(uint8_t *pBuffer, NAND_ADDRESS Address, uin
   uint32_t numsparearearead = 0x00, index = 0x00, addressstatus = NAND_VALID_ADDRESS;
   uint32_t status = NAND_READY, size = 0x00;
 
+  puts("Read Spare Area Alt");
+
   while((NumSpareAreaToRead != 0x0) && (addressstatus == NAND_VALID_ADDRESS))
   {
     /* Page Read command and page address */
@@ -1463,7 +1399,7 @@ uint32_t FSMC_NAND_ReadSpareArea_alt(uint8_t *pBuffer, NAND_ADDRESS Address, uin
     /* ¶ÁÃ¦½Å */
    // while( GPIO_ReadInputDataBit(GPIOG, GPIO_Pin_6) == 0 );
     while(HAL_GPIO_ReadPin(GPIOD, GPIO_PIN_6) == 0) {
-    	puts("wait");
+
     } ;
 
     for(int d = 0; d < 10000; d++)
@@ -1492,4 +1428,96 @@ uint32_t FSMC_NAND_ReadSpareArea_alt(uint8_t *pBuffer, NAND_ADDRESS Address, uin
 
   return (status | addressstatus);
 }
+
+uint32_t FSMC_NAND_WriteSmallPage_alt(uint8_t *pBuffer, NAND_ADDRESS Address, uint32_t NumPageToWrite)
+{
+  uint32_t index = 0x00, numpagewritten = 0x00, addressstatus = NAND_VALID_ADDRESS;
+  uint32_t status = NAND_READY, size = 0x00;
+
+  while((NumPageToWrite != 0x00) && (addressstatus == NAND_VALID_ADDRESS) && (status == NAND_READY))
+  {
+    /* Page write command and address */
+	  *(__IO uint8_t *)(NAND_FLASH_START_ADDR | CMD_AREA) = NAND_CMD_PAGEPROGRAM;
+
+	  *(__IO uint8_t *)(NAND_FLASH_START_ADDR | ADDR_AREA) = 0x00;
+	  *(__IO uint8_t *)(NAND_FLASH_START_ADDR | ADDR_AREA) = 0X00;
+	  *(__IO uint8_t *)(NAND_FLASH_START_ADDR | ADDR_AREA) = ADDR_1st_CYCLE(ROW_ADDRESS);
+	  *(__IO uint8_t *)(NAND_FLASH_START_ADDR | ADDR_AREA) = ADDR_2nd_CYCLE(ROW_ADDRESS);
+
+    /* Calculate the size */
+    size = NAND_PAGE_SIZE + (NAND_PAGE_SIZE * numpagewritten);
+
+    /* Write data */
+    for(index=0; index < size; index++)
+    {
+    	*(__IO uint8_t *)(NAND_FLASH_START_ADDR | DATA_AREA) = pBuffer[index];
+    }
+
+    *(__IO uint8_t *)(NAND_FLASH_START_ADDR | CMD_AREA) = NAND_CMD_PAGEPROGRAM_TRUE;
+
+    /* ¶ÁÃ¦½Å */
+//    while( GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_6) == 0 );
+
+    /* Check status for successful operation */
+    status = FSMC_NAND_GetStatus();
+
+    if(status == NAND_READY)
+    {
+      numpagewritten++;
+
+      NumPageToWrite--;
+
+      /* Calculate Next small page Address */
+      addressstatus = FSMC_NAND_AddressIncrement(&Address);
+    }
+  }
+
+  return (status | addressstatus);
+}
+
+//*************************************************************************
+uint32_t FSMC_NAND_ReadSmallPage_alt(uint8_t *pBuffer, NAND_ADDRESS Address, uint32_t NumPageToRead)
+{
+  uint32_t index = 0x00, numpageread = 0x00, addressstatus = NAND_VALID_ADDRESS;
+  uint32_t status = NAND_READY, size = 0x00;
+
+  while((NumPageToRead != 0x0) && (addressstatus == NAND_VALID_ADDRESS))
+  {
+    /* Page Read command and page address */
+	  *(__IO uint8_t *)(NAND_FLASH_START_ADDR | CMD_AREA) = NAND_CMD_READ_1;
+
+	  *(__IO uint8_t *)(NAND_FLASH_START_ADDR | ADDR_AREA) = 0x00;
+	  *(__IO uint8_t *)(NAND_FLASH_START_ADDR | ADDR_AREA) = 0X00;
+	  *(__IO uint8_t *)(NAND_FLASH_START_ADDR | ADDR_AREA) = ADDR_1st_CYCLE(ROW_ADDRESS);
+	  *(__IO uint8_t *)(NAND_FLASH_START_ADDR | ADDR_AREA) = ADDR_2nd_CYCLE(ROW_ADDRESS);
+
+	  *(__IO uint8_t *)(NAND_FLASH_START_ADDR | CMD_AREA) = NAND_CMD_READ_TRUE;
+
+    /* ¶ÁÃ¦½Å */
+    //while( GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_6) == 0 );
+
+    /* Calculate the size */
+    size = NAND_PAGE_SIZE + (NAND_PAGE_SIZE * numpageread);
+
+	for(index=0; index < 0x255; index++);//ÑÓÊ±
+
+    /* Get Data into Buffer */
+    for(index=0; index < size; index++)
+    {
+      pBuffer[index]= *(__IO uint8_t *)(NAND_FLASH_START_ADDR | DATA_AREA);
+    }
+
+    numpageread++;
+
+    NumPageToRead--;
+
+    /* Calculate page address */
+    addressstatus = FSMC_NAND_AddressIncrement(&Address);
+  }
+
+  status = FSMC_NAND_GetStatus();
+
+  return (status | addressstatus);
+}
+
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

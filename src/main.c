@@ -52,15 +52,21 @@ main(int argc, char* argv[])
 	        dataToRead[i] = 0x00;
 	    }
 
-	//    NAND_Write(0, dataToWrite, 512);
-	//    NAND_Read(0, dataToRead, 512);
+	  //  NAND_Write(10, dataToWrite, 512);
+	  //  NAND_Read(10, dataToRead, 512);
 	NAND_ADDRESS m_address;
 	m_address.Zone = 0;
 	m_address.Page = 2;
 	m_address.Block = 0;
-	FSMC_NAND_WriteSpareArea_alt(dataToWrite, m_address, 1);
+	//FSMC_NAND_WriteSpareArea_alt(dataToWrite, m_address, 1);
 
 	FSMC_NAND_ReadSpareArea_alt(dataToRead, m_address, 1);
+
+	//FSMC_NAND_WriteSmallPage_alt(dataToWrite, m_address, 1);
+
+	FSMC_NAND_ReadSmallPage_alt(dataToRead, m_address, 1);
+
+
 
 	m_address.Page = 5;
 

@@ -475,9 +475,11 @@ uint32_t FSMC_NAND_ReadSpareArea(uint8_t *pBuffer,
                                  uint32_t  NumSpareAreaToRead);
 uint32_t FSMC_NAND_EraseBlock(NAND_ADDRESS Address);
 
-
+// Alternative functions
 uint32_t FSMC_NAND_ReadSpareArea_alt(uint8_t *pBuffer, NAND_ADDRESS Address, uint32_t NumSpareAreaToRead);
 uint32_t FSMC_NAND_WriteSpareArea_alt(uint8_t *pBuffer, NAND_ADDRESS Address, uint32_t NumSpareAreaTowrite);
+uint32_t FSMC_NAND_ReadSmallPage_alt(uint8_t *pBuffer, NAND_ADDRESS Address, uint32_t NumPageToRead);
+uint32_t FSMC_NAND_WriteSmallPage_alt(uint8_t *pBuffer, NAND_ADDRESS Address, uint32_t NumPageToWrite);
 #endif /* __FSMC_NAND_IF_H */
 
 /**
